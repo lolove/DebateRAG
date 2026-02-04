@@ -4,7 +4,7 @@ createApp({
   setup() {
     const documents = ref([
       "Michael Jeffrey Jordan is a former professional basketball player who born in 1963.",
-      "Micheal Iwris Jordan was born on February 17, 2000, in Brooklyn, New York City.",
+      "Michael Irwin Jordan ForMemRS[6] (born February 25, 1956) is an American scientist, professor at the University of California, Berkeley.",
       "Michael Jordan is a farmer who born in 1888.",
     ]);
     const query = ref("What year was Michael Jordan born?");
