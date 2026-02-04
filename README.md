@@ -74,4 +74,4 @@ The frontend connects to `ws://127.0.0.1:8000/ws/debate` and sends a JSON payloa
 
 ## Screenshots / Demo
 
-![alt text](image.png)
+![DebateRAG screenshot](https://github.com/lolove/DebateRAG/blob/main/screenshot.png)
