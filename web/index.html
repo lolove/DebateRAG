@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DebateRAG Ambiguity Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/web/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">DebateRAG Lab</p>
+          <h1>Ambiguity Finder: Debate-Driven RAG</h1>
+          <p class="subhead">
+            Feed documents and a question. Watch agents debate, detect ambiguity, and
+            synthesize multiple valid answers.
+          </p>
+        </div>
+        <div class="hero-badge">FastAPI + Vue</div>
+      </header>
+
+      <main class="grid">
+        <section class="panel" v-if="showInputs && !isRunning">
+          <h2>Inputs</h2>
+          <div class="field">
+            <span>Documents (up to 4)</span>
+            <div class="doc-list">
+              <div class="doc-item" v-for="(doc, idx) in documents" :key="idx">
+                <textarea
+                  v-model="documents[idx]"
+                  :placeholder="`Document ${idx + 1}`"
+                  rows="3"
+                ></textarea>
+                <button class="ghost" @click="removeDoc(idx)" v-if="documents.length > 1">
+                  Remove
+                </button>
+              </div>
+            </div>
+            <button class="ghost" @click="addDoc" :disabled="documents.length >= 4">
+              Add Document
+            </button>
+          </div>
+          <label class="field">
+            <span>Question</span>
+            <input v-model="query" type="text" />
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Debate rounds</span>
+              <input v-model.number="rounds" type="number" min="1" max="4" />
+            </label>
+            <label class="field">
+              <span>Top K chunks</span>
+              <input v-model.number="topK" type="number" min="1" max="20" />
+            </label>
+          </div>
+          <button class="primary" :disabled="isRunning" @click="runDebate">
+            <span v-if="!isRunning">Run Debate</span>
+            <span v-else>Thinking...</span>
+          </button>
+          <p class="error" v-if="errorMessage">{{ errorMessage }}</p>
+          <div class="stats" v-if="stats">
+            <div>
+              <strong>{{ stats.documents }}</strong>
+              <span>docs</span>
+            </div>
+            <div>
+              <strong>{{ stats.chunks }}</strong>
+              <span>chunks</span>
+            </div>
+            <div>
+              <strong>{{ stats.retrieved }}</strong>
+              <span>retrieved</span>
+            </div>
+            <div>
+              <strong>{{ stats.rounds }}</strong>
+              <span>rounds</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel stage" v-if="showStage">
+          <div class="stage-actions">
+            <button class="ghost" @click="restart">Restart</button>
+            <button class="ghost" @click="toggleLog">
+              {{ showLog ? "Hide Log" : "Show Log" }}
+            </button>
+          </div>
+          <div class="stage-progress">
+            <h3>Pipeline</h3>
+            <div class="stage-steps">
+              <div
+                v-for="stage in stageProgress"
+                :key="stage.key"
+                class="stage-step"
+                :class="stage.status"
+              >
+                <span class="dot"></span>
+                <span class="label">{{ stage.label }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="scene" :style="{ '--speaker-x': speakerX }">
+            <div class="speech" :class="{ active: currentSpeech }">
+              <p>{{ currentSpeech || "Waiting for debate..." }}</p>
+            </div>
+            <div class="desk"></div>
+            <div class="desk-label" v-if="activeAgentLabel">
+              Speaking: {{ activeAgentLabel }}
+            </div>
+            <div class="agent-row">
+              <div
+                class="agent-figure"
+                v-for="n in agentCount"
+                :key="n"
+                :class="{
+                  'is-active': n === activeAgentIndex,
+                  'is-idle': activeAgentIndex && n !== activeAgentIndex,
+                }"
+              >
+                <div class="head"></div>
+                <div class="agent-label">Agent {{ n }}</div>
+                <div class="body"></div>
+                <div class="arm arm-left"></div>
+                <div class="arm arm-right"></div>
+              </div>
+            </div>
+          </div>
+          <div class="final" v-if="finalAnswer">
+            <h3>Final Answer</h3>
+            <p>{{ finalAnswer }}</p>
+          </div>
+        </section>
+
+        <section class="panel log" v-if="showLog && !isRunning">
+          <div class="log-header">
+            <h2>Debate Log</h2>
+            <button class="ghost" :disabled="steps.length === 0" @click="replay">
+              Replay
+            </button>
+          </div>
+          <div class="log-list">
+            <div
+              v-for="(step, index) in visibleSteps"
+              :key="index"
+              class="log-item"
+            >
+              <div class="log-meta">
+                <span class="stage-pill">{{ stageLabel(step) }}</span>
+                <span class="speaker">{{ step.speaker }}</span>
+                <span class="round" v-if="step.round">Round {{ step.round }}</span>
+              </div>
+              <p class="log-message">{{ step.message }}</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/web/app.js"></script>
+  </body>
+</html>
